@@ -1,0 +1,23 @@
+.pointer{
+  cursor: pointer;
+}
+
+.bg-3{
+  background-color: aliceblue;
+}
+
+@media screen and (max-width:764px){
+  .side-bar-responsive{
+      position: absolute;
+      z-index: 10;
+      background-color: aliceblue;
+      top: 0;
+      left: 0;
+      transform: translateX(-100%);
+      transition: all .5s ease-in;
+      padding: 10px;
+  } 
+  .side-bar-responsive-toggle{
+      transform: translateX(0%) !important;        
+  }
+}
