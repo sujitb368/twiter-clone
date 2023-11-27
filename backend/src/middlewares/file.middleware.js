@@ -1,6 +1,7 @@
 // controllers/userController.js
 import multer from "multer";
 import path from "path";
+import { __dirname } from "../config.js";
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -45,4 +46,21 @@ const upload = multer({
   },
 });
 
-export { upload };
+// Function to download a file
+const downloadFile = (req, res) => {
+  console.log("download for post", req.params.filename);
+  const { filename } = req.params;
+  const path = __dirname + "/images/";
+
+  // Download the file
+  res.download(path + filename, (error) => {
+    if (error) {
+      res.status(500).send({
+        success: false,
+        message: "File cannot be downloaded " + error,
+      });
+    }
+  });
+};
+
+export { upload, downloadFile };

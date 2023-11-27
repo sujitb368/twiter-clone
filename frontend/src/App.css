@@ -8,16 +8,17 @@
 
 @media screen and (max-width:764px){
   .side-bar-responsive{
-      position: absolute;
+      position: fixed !important;
       z-index: 10;
       background-color: aliceblue;
       top: 0;
       left: 0;
-      transform: translateX(-100%);
+      transform: translateX(-120%);
       transition: all .5s ease-in;
       padding: 10px;
-  } 
-  .side-bar-responsive-toggle{
-      transform: translateX(0%) !important;        
+    } 
+    .side-bar-responsive-toggle{
+      transform: translateX(0%) !important;    
+      transition: all 1s ease-in;
   }
 }

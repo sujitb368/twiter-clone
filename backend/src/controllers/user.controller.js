@@ -304,7 +304,6 @@ const uploadProfilePicture = async (req, res) => {
 
 // Function to download a file
 const downloadFile = (req, res) => {
-  console.log("download", req.params.filename);
   const { filename } = req.params;
   const path = __dirname + "/images/";
 

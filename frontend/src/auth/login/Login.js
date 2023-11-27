@@ -5,7 +5,12 @@ import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import logo from "../../images/logo2.png";
+import { useAuth } from "../../context/authContext";
+import { toast } from "react-toastify";
 const Login = () => {
+  //get from authDispatcher
+  const { authDispatch } = useAuth();
+  //sate variable for login
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -42,15 +47,14 @@ const Login = () => {
         localStorage.setItem("token", response?.data?.token);
         localStorage.setItem("user", JSON.stringify(response?.data?.user));
         // Perform login logic, and if successful, dispatch the user data
-        // cartDispatch({
-        //   type: "LOGIN_SUCCESS",
-        //   payload: {
-        //     user: response.data.user,
-        //     token: response.data.token,
-        //   },
-        // });
-        //close loader
-        // setloading(false);
+        authDispatch({
+          type: "AUTH_SUCCESS",
+          payload: {
+            user: response.data.user,
+            token: response.data.token,
+          },
+        });
+        //close loader;
         //after login redirect to home page
         navigate(location.state || "/");
       }
@@ -58,12 +62,9 @@ const Login = () => {
       /* The code block you provided is handling the error that occurs during the login process. */
       console.log("Error while login", error.response);
 
-      //show alert with the error message
-      //   Message({
-      //     type: "error",
-      //     message: error?.response?.data?.message ?? "Something went wrong",
-      //   });
-      //   setloading(false);
+      toast.error(
+        error?.response?.data?.message ?? error?.message ?? "Error while login"
+      );
     }
   };
   return (
@@ -86,6 +87,7 @@ const Login = () => {
             <input
               type="email"
               className="form-control"
+              placeholder="Enter your email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -97,6 +99,7 @@ const Login = () => {
             <input
               type="password"
               className="form-control"
+              placeholder="Enter your password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

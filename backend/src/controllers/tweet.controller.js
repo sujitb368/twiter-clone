@@ -2,9 +2,6 @@
 // Import the Tweet model
 import Tweet from "../models/tweet.model.js";
 
-// import user model
-import User from "../models/user.model.js";
-
 /**
  * Create a new tweet.
  * @param {Object} req - Express request object.
@@ -169,8 +166,6 @@ const replyToTweet = async (req, res) => {
         .send({ message: "Parent tweet not found", success: false });
     }
 
-    console.log("parent tweet ", parentTweet);
-
     // Create a new tweet for the reply
     const newReply = new Tweet({
       content,
@@ -189,7 +184,7 @@ const replyToTweet = async (req, res) => {
     return res.status(201).send({
       message: "Reply tweet created successfully",
       success: true,
-      reply: newReply,
+      tweet: newReply,
     });
   } catch (error) {
     // Handle errors
@@ -212,7 +207,8 @@ const getSingleTweet = async (req, res) => {
 
     // Find the tweet by ID and populate fields with references
     const tweet = await Tweet.findById(tweetId)
-      .populate("tweetedBy", "_id name") // Populate 'tweetedBy' with selected fields
+      .populate("tweetedBy", "_id name profilePicture username") // Populate 'tweetedBy' with selected fields
+      .populate("retweetedBy", "_id name profilePicture username") // Populate 'tweetedBy' with selected fields
       .populate({
         path: "reply",
         model: "Tweet",
@@ -257,6 +253,7 @@ const getAllTweet = async (req, res) => {
     // Find all tweet in descending order and populate fields with references
     const tweet = await Tweet.find({})
       .populate("tweetedBy", "_id name profilePicture username") // Populate 'tweetedBy' with selected fields
+      .populate("retweetedBy", "_id name profilePicture username") // Populate 'tweetedBy' with selected fields
       .populate({
         path: "reply",
         model: "Tweet",
@@ -388,6 +385,52 @@ const retweetTweet = async (req, res) => {
   }
 };
 
+/**
+ * Upload user profile picture.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ */
+const uploadTweetImage = async (req, res) => {
+  try {
+    const { _id: tweetId } = req.params;
+
+    // Check if a file is present in the request
+    if (!req.file) {
+      return res
+        .status(400)
+        .send({ message: "No file uploaded", success: false });
+    }
+
+    // Find the tweet by ID
+    const tweet = await Tweet.findById(tweetId);
+
+    // Check if the user exists
+    if (!tweet) {
+      return res
+        .status(404)
+        .send({ message: "Tweet not found", success: false });
+    }
+
+    // Update the user's profile picture field with the filename
+    tweet.image = req.file.filename;
+
+    // Save the updated user in the DB
+    await tweet.save();
+
+    return res.status(200).json({
+      message: "Tweet image uploaded successfully",
+      success: true,
+      imagePath: req.file.filename,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error(error.message); // Log the error for debugging
+    return res
+      .status(500)
+      .send({ message: "Internal Server Error", success: false, error });
+  }
+};
+
 // export controllers functions
 export {
   createTweet,
@@ -398,4 +441,5 @@ export {
   getAllTweet,
   deleteTweet,
   retweetTweet,
+  uploadTweetImage,
 };

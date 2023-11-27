@@ -17,6 +17,7 @@ import Signup from "./auth/signup/Signup";
 import Home from "./pages/home/Home";
 import { useEffect } from "react";
 import { useAuth } from "./context/authContext";
+import TweetDetails from "./pages/tweetDetails/TweetDetails";
 
 function App() {
   const { authState, authDispatch } = useAuth();
@@ -25,8 +26,6 @@ function App() {
     //get user cart from local storage
     const user = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
-
-    console.log("in app user and token", user, token);
 
     // Log in user if token and user exist
     if (token && user) {
@@ -41,10 +40,23 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Home />}></Route>
-        <Route path="/home" element={<Home />}></Route>
-        <Route path="/login" element={<Login />}></Route>
-        <Route path="/signup" element={<Signup />}></Route>
+        {/* Private routes */}
+        {authState.token ? (
+          <>
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/tweetDetails/:id" element={<TweetDetails />} />
+            <Route path="/*" element={<Home />} />
+          </>
+        ) : (
+          <>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            {/* // Redirect to login for any other URLs if user is not logged in */}
+            <Route path="/*" element={<Login />} />
+          </>
+        )}
       </Routes>
     </>
   );

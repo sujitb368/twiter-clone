@@ -12,21 +12,28 @@ import { API_BASE_URL } from "../../Constant";
 import Sidebar from "../../components/sidebar/Sidebar";
 import { FaHeart, FaReply, FaRetweet, FaTrashCan } from "react-icons/fa6";
 import { useAuth } from "../../context/authContext";
+import TweetCard from "../../components/tweetCard/TweetCard";
 
 const Home = () => {
-  //state variables
+  //auth provider
+  const { authState } = useAuth();
+
+  //state variables for tweet
   const [tweets, setTweets] = useState([]);
   const [tweetType, setTweetType] = useState("tweet");
   const [tweetId, setTweetId] = useState("");
   const [newTweetContent, setNewTweetContent] = useState("");
-
   const [liked, setLiked] = useState([]);
+  const [postImage, setPostImage] = useState({
+    preview: "",
+    data: "",
+  });
+
+  //tweet modal
   const [showTweetModal, setShowTweetModal] = useState(false);
+
   //side bar toggler
   const [toggleSideBar, setToggleSideBar] = useState(false);
-
-  //auth provider
-  const { authState } = useAuth();
 
   //navigation hooks
   // const navigate = useNavigate();
@@ -36,6 +43,10 @@ const Home = () => {
     //eslint-disable-next-line
   }, [authState.token]);
 
+  const tweetOperation = () => {
+    //Get new tweets
+    getTweets();
+  };
   // Fetch tweets your backend
   const getTweets = async () => {
     try {
@@ -48,86 +59,25 @@ const Home = () => {
     }
   };
 
-  const handleLike = async (tweetId) => {
+  //function to upload image
+  const uploadImage = async (id) => {
     try {
-      //API call to like the tweet
-      const response = await axios.post(
-        `/tweet/${tweetId}/like`,
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Create a FormData object to handle file upload
+      const formData = new FormData();
+      formData.append("file", postImage.data);
 
+      //upload API call
+      const response = await axios.post(`/tweet/${id}/image`, formData);
       if (response?.data?.success) {
-        setLiked((pre) => [...pre, tweetId]);
-        console.log("liked", liked);
-        await getTweets();
-        toast.success(response?.data?.message);
+        return response.data.imagePath;
       }
     } catch (error) {
+      console.log("error in upload", error);
       toast.error(
         error?.response?.data?.message ??
           error?.message ??
-          "Something went wrong in like"
+          "Something went wrong in tweet's image posting"
       );
-      console.log(`Error while like tweet`, error);
-    }
-  };
-
-  //function to reply a tweet
-  const handleReply = async (tweetId) => {
-    try {
-      // Make API request to post the new tweet
-      const response = await axios.post(
-        `/tweet/${tweetId}/reply`,
-        {
-          content: newTweetContent,
-        },
-        {
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      );
-
-      //if tweet posting is successful
-      if (response?.data?.success) {
-        //show success toast
-        toast.success(response.data.message);
-
-        // Refresh the tweet list
-        getTweets();
-      }
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message ??
-          error?.message ??
-          "Something went wrong in tweet posting"
-      );
-      setShowTweetModal(!showTweetModal);
-    }
-  };
-
-  // function to delete a tweet
-  const handleDelete = async (tweetId) => {
-    try {
-      // Make API request to delete the tweet
-      const response = await axios.delete(`/tweet/${tweetId}`);
-
-      if (response?.data?.success) {
-        await getTweets();
-        toast.success(response?.data?.message);
-      }
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message ??
-          error?.message ??
-          "Something went wrong in delete tweet"
-      );
-      console.log(`Error while deleting tweet`, error);
     }
   };
 
@@ -141,7 +91,7 @@ const Home = () => {
           : tweetType === "retweet"
           ? `/tweet/${tweetId}/retweet`
           : `/tweet/${tweetId}/reply`;
-      console.log("end point", endPoint);
+
       const response = await axios.post(
         endPoint,
         {
@@ -156,13 +106,24 @@ const Home = () => {
 
       //if tweet posting is successful
       if (response?.data?.success) {
+        //upload image if have
+
+        if (postImage.preview.length) {
+          console.log("inside image upload 2", postImage);
+          //pass the tweet id to upload image
+          await uploadImage(response?.data?.tweet._id);
+        }
         //show success toast
         toast.success(response.data.message);
+
+        //reset image preview
+        setPostImage({ preview: "", data: "" });
 
         // Refresh the tweet list
         getTweets();
       }
     } catch (error) {
+      console.log("error", error);
       toast.error(
         error?.response?.data?.message ??
           error?.message ??
@@ -180,6 +141,20 @@ const Home = () => {
   // Function to handle sidebar toggle
   const handelSideBar = () => {
     setToggleSideBar(!toggleSideBar);
+  };
+
+  // Function to handle file selection
+  const handleFileSelect = (event) => {
+    try {
+      const img = {
+        preview: URL.createObjectURL(event.target.files[0]),
+        data: event.target.files[0],
+      };
+      //set the value of state variable `image` with `img` from above object
+      setPostImage(img);
+    } catch (error) {
+      console.log("error: " + error);
+    }
   };
 
   return (
@@ -212,9 +187,11 @@ const Home = () => {
 
         {/* sidebar */}
         <div
-          className={`col-10 col-md-4 pt-5 border side-bar-responsive bg-2 ${
-            toggleSideBar ? "side-bar-responsive-toggle" : ""
-          }`}
+          className={`
+          col-10 col-md-4 pt-5 border border-end-0 side-bar-responsive bg-2 
+          position-sticky top-0 start-0
+          ${toggleSideBar ? "side-bar-responsive-toggle" : ""}`}
+          style={{ height: "90vh" }}
         >
           <Sidebar />
         </div>
@@ -246,89 +223,13 @@ const Home = () => {
                 } `}
                 key={tweet._id}
               >
-                <div className="col-md-2 pe-1">
-                  <div
-                    style={{ width: "50px", height: "50px" }}
-                    className="border rounded-circle ms-auto"
-                  >
-                    <img
-                      className="img-fluid p-2"
-                      src={`${API_BASE_URL}/user/get-file/${tweet.tweetedBy.profilePicture}?jwtToken=${authState.token}`}
-                      alt="User"
-                    />
-                  </div>
-                </div>
-
-                <div className="col-8 ">
-                  <Link className="text-decoration-none text-dark" to="/login">
-                    <p className="m-0 p-1">
-                      {" "}
-                      <span className="fw-bold">
-                        {tweet.tweetedBy?.username}
-                      </span>{" "}
-                      - <span>{tweet.createdAt}</span>
-                    </p>
-
-                    <p>{tweet.content}</p>
-
-                    {/* if image */}
-                    {tweet.image?.length > 0 && (
-                      <img src={tweet.image} alt="" />
-                    )}
-                  </Link>
-                  {/* Like, Reply, Retweet buttons */}
-                  <div className="d-flex">
-                    <span className="me-1">
-                      <FaHeart
-                        className={`pointer ${
-                          tweet.likes.includes(authState.user._id)
-                            ? "text-danger"
-                            : "text-muted"
-                        }`}
-                        onClick={() => handleLike(tweet._id)}
-                      />
-                      <span className="mx-1">{tweet.likes.length}</span>
-                    </span>
-                    <span className="me-1">
-                      <FaReply
-                        onClick={() => {
-                          setShowTweetModal(!showTweetModal);
-                          setTweetType("reply");
-                          setTweetId(tweet._id);
-                        }}
-                        className="text-primary pointer"
-                        data-bs-toggle="modal"
-                        data-bs-target="#tweetModal"
-                      />
-                      <span className="mx-1">{tweet.reply.length}</span>
-                    </span>
-
-                    <span className="me-1">
-                      <FaRetweet
-                        className="text-primary pointer"
-                        data-bs-toggle="modal"
-                        data-bs-target="#tweetModal"
-                        onClick={() => {
-                          setShowTweetModal(!showTweetModal);
-                          setTweetType("retweet");
-                          setTweetId(tweet._id);
-                        }}
-                      />
-                      <span className="mx-1">{tweet.retweetedBy.length}</span>
-                    </span>
-
-                    {/* Delete button (visible only to the tweet creator) */}
-                    {authState.user &&
-                      authState.user._id === tweet.tweetedBy._id && (
-                        <span className="me-1">
-                          <FaTrashCan
-                            onClick={() => handleDelete(tweet._id)}
-                            className="text-danger pointer"
-                          />
-                        </span>
-                      )}
-                  </div>
-                </div>
+                {/* cardId : {tweet._id} */}
+                <TweetCard
+                  key={tweet._id}
+                  details={tweet}
+                  tweetIdProps={tweet._id}
+                  tweetOperation={tweetOperation}
+                />
               </div>
             ))}
 
@@ -348,13 +249,7 @@ const Home = () => {
         <div className="modal-dialog" role="document">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">
-                {tweetType === "tweet"
-                  ? "Tweet"
-                  : tweetType === "retweet"
-                  ? "Re-tweet"
-                  : "Reply"}
-              </h5>
+              <h5 className="modal-title">Tweet</h5>
               <button
                 type="button"
                 className="btn-close"
@@ -365,11 +260,29 @@ const Home = () => {
             </div>
             <div className="modal-body">
               <textarea
-                className="form-control"
+                className="form-control mb-2"
                 placeholder="Add your comment"
                 value={newTweetContent}
                 onChange={(e) => setNewTweetContent(e.target.value)}
               ></textarea>
+              <div className="mb-3">
+                {postImage.preview.length > 0 && (
+                  <div className="col-10 m-auto">
+                    {" "}
+                    <img
+                      style={{ width: "90%", objectFit: "contain" }}
+                      src={postImage.preview}
+                      alt="post"
+                    />{" "}
+                  </div>
+                )}
+                <input
+                  className="form-control form-control-sm"
+                  id="formFileSm"
+                  type="file"
+                  onChange={(e) => handleFileSelect(e)}
+                />
+              </div>
             </div>
             <div className="modal-footer">
               <button

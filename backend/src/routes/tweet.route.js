@@ -10,7 +10,9 @@ import {
   likeTweet,
   replyToTweet,
   retweetTweet,
+  uploadTweetImage,
 } from "../controllers/tweet.controller.js";
+import { downloadFile, upload } from "../middlewares/file.middleware.js";
 
 //router object
 const router = express.Router();
@@ -38,5 +40,18 @@ router.delete("/:_id", isLogin, deleteTweet);
 
 //retweet route | _id => tweet id
 router.post("/:_id/retweet", isLogin, retweetTweet);
+
+/**
+ * upload tweet image.
+ * @param {string} file - req.params.
+ */
+router.post("/:_id/image", isLogin, upload.single("file"), uploadTweetImage);
+
+/**
+ * downloading a file by filename
+ * @param {string} filename - req.params.
+ */
+// Route for downloading a file by filename
+router.get("/get-file/:filename", downloadFile);
 
 export default router;
