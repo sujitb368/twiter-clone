@@ -1,18 +1,18 @@
 // import dependencies and modules
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "./Home.css";
 
 // icons import
 import { BsList, BsXSquareFill } from "react-icons/bs";
-import { API_BASE_URL } from "../../Constant";
 import Sidebar from "../../components/sidebar/Sidebar";
-import { FaHeart, FaReply, FaRetweet, FaTrashCan } from "react-icons/fa6";
 import { useAuth } from "../../context/authContext";
 import TweetCard from "../../components/tweetCard/TweetCard";
+
+import Loader from "../../components/loader/Loader";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   //auth provider
@@ -20,23 +20,19 @@ const Home = () => {
 
   //state variables for tweet
   const [tweets, setTweets] = useState([]);
-  const [tweetType, setTweetType] = useState("tweet");
-  const [tweetId, setTweetId] = useState("");
   const [newTweetContent, setNewTweetContent] = useState("");
-  const [liked, setLiked] = useState([]);
   const [postImage, setPostImage] = useState({
     preview: "",
     data: "",
   });
-
-  //tweet modal
-  const [showTweetModal, setShowTweetModal] = useState(false);
+  //state variable to control loader
+  const [showLoader, setShowLoader] = useState(true);
 
   //side bar toggler
   const [toggleSideBar, setToggleSideBar] = useState(false);
 
   //navigation hooks
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getTweets();
@@ -51,11 +47,18 @@ const Home = () => {
   const getTweets = async () => {
     try {
       const response = await axios.get(`/tweet`);
-      if (response?.data) {
+      if (response?.data?.success) {
         setTweets(response?.data?.tweet);
+        setShowLoader(false);
       }
     } catch (error) {
       console.error("Error fetching tweets:", error);
+      setShowLoader(false);
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     }
   };
 
@@ -78,22 +81,25 @@ const Home = () => {
           error?.message ??
           "Something went wrong in tweet's image posting"
       );
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     }
   };
 
   // function for posting a new tweet
   const handleTweet = async () => {
     try {
+      if (newTweetContent?.trim().length < 1) {
+        toast.error("Tweet content is required");
+      }
+      setShowLoader(true);
       // Make API request to post the new tweet
-      const endPoint =
-        tweetType === "tweet"
-          ? "/tweet"
-          : tweetType === "retweet"
-          ? `/tweet/${tweetId}/retweet`
-          : `/tweet/${tweetId}/reply`;
 
       const response = await axios.post(
-        endPoint,
+        `/tweet`,
         {
           content: newTweetContent,
         },
@@ -107,17 +113,19 @@ const Home = () => {
       //if tweet posting is successful
       if (response?.data?.success) {
         //upload image if have
-
         if (postImage.preview.length) {
-          console.log("inside image upload 2", postImage);
           //pass the tweet id to upload image
           await uploadImage(response?.data?.tweet._id);
         }
+        //remove loader
+        setShowLoader(false);
         //show success toast
         toast.success(response.data.message);
 
         //reset image preview
         setPostImage({ preview: "", data: "" });
+        //reset newTweetContent variable
+        setNewTweetContent("");
 
         // Refresh the tweet list
         getTweets();
@@ -129,13 +137,15 @@ const Home = () => {
           error?.message ??
           "Something went wrong in tweet posting"
       );
-      setShowTweetModal(!showTweetModal);
-    }
-  };
+      // remove loader
+      setShowLoader(false);
 
-  const close = (setState) => {
-    // Implement logic to handle retweeting
-    setState(false);
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    }
   };
 
   // Function to handle sidebar toggle
@@ -161,18 +171,7 @@ const Home = () => {
     <div className="container">
       <div className="row col-lg-10 m-auto pt-3">
         {/* ToastContainer for displaying notifications */}
-        <ToastContainer
-          position="top-right"
-          autoClose={2000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss={false}
-          draggable
-          pauseOnHover={false}
-          theme="light"
-        />
+
         <div className="d-md-none d-flex justify-content-end py-2">
           {!toggleSideBar ? (
             <button className="btn bg-3" onClick={handelSideBar}>
@@ -202,19 +201,19 @@ const Home = () => {
             <h2 className="text-primary">Home</h2>
 
             {/* Tweet Button */}
-            <button
-              className="btn btn-primary"
-              data-bs-toggle="modal"
-              data-bs-target="#tweetModal"
-              onClick={() => {
-                setShowTweetModal(!showTweetModal);
-                setTweetType("tweet");
-              }}
-            >
-              Tweet
-            </button>
+            {showLoader && <Loader />}
+            {!showLoader && (
+              <button
+                className="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#tweetModal"
+              >
+                Tweet
+              </button>
+            )}
           </div>
 
+          {/* List of Tweets */}
           <div className="border rounded">
             {tweets.map((tweet, index) => (
               <div
@@ -229,23 +228,17 @@ const Home = () => {
                   details={tweet}
                   tweetIdProps={tweet._id}
                   tweetOperation={tweetOperation}
+                  index={index}
                 />
               </div>
             ))}
-
-            {/* List of Tweets */}
           </div>
         </div>
       </div>
 
-      {/* Reply Dialog */}
+      {/* tweet modal */}
 
-      <div
-        className={`modal ${showTweetModal ? "show" : ""}`}
-        tabIndex="-1"
-        role="dialog"
-        id="tweetModal"
-      >
+      <div className={`modal`} tabIndex="-1" role="dialog" id="tweetModal">
         <div className="modal-dialog" role="document">
           <div className="modal-content">
             <div className="modal-header">
@@ -255,7 +248,6 @@ const Home = () => {
                 className="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Close"
-                onClick={(e) => close(setShowTweetModal)}
               ></button>
             </div>
             <div className="modal-body">
@@ -289,7 +281,6 @@ const Home = () => {
                 type="button"
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
-                onClick={(e) => close(setShowTweetModal)}
               >
                 Close
               </button>

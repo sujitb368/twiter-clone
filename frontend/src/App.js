@@ -18,6 +18,8 @@ import Home from "./pages/home/Home";
 import { useEffect } from "react";
 import { useAuth } from "./context/authContext";
 import TweetDetails from "./pages/tweetDetails/TweetDetails";
+import Profile from "./pages/profile/Profile";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   const { authState, authDispatch } = useAuth();
@@ -39,13 +41,26 @@ function App() {
   }, []);
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover={false}
+        theme="light"
+      />
       <Routes>
         {/* Private routes */}
-        {authState.token ? (
+        {authState.user._id ? (
           <>
             <Route path="/" element={<Home />} />
             <Route path="/home" element={<Home />} />
             <Route path="/tweetDetails/:id" element={<TweetDetails />} />
+            <Route path="/profile/:id" element={<Profile />} />
             <Route path="/*" element={<Home />} />
           </>
         ) : (

@@ -7,6 +7,7 @@ import {
   editUserDetails,
   followUser,
   getSingleUser,
+  getUserTweets,
   unfollowUser,
   uploadProfilePicture,
 } from "../controllers/user.controller.js";
@@ -41,6 +42,13 @@ router.get("/users", async (req, res) => {
  * @param {string} id - req.params.
  */
 router.get("/:id", isLogin, getSingleUser);
+
+//get all tweets user | get by tweetedBy
+/**
+ * get single user.
+ * @param {string} id - req.params.
+ */
+router.get("/:id/tweets", isLogin, getUserTweets);
 
 /**
  * follow a user.

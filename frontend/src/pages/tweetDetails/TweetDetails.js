@@ -11,7 +11,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { BsList, BsXSquareFill } from "react-icons/bs";
 
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Sidebar from "../../components/sidebar/Sidebar";
 import TweetCard from "../../components/tweetCard/TweetCard";
@@ -20,11 +20,24 @@ function TweetDetails() {
   //get tweet id from url params
   const { id } = useParams();
 
+  const [replyTweetContent, setReplyTweetContent] = useState("");
+  const [postImage, setPostImage] = useState({
+    preview: "",
+    data: "",
+  });
+
+  //tweet modal
+  const [showReplyModal, setShowReplyModal] = useState(false);
+
+  const [tweetId, setTweetId] = useState();
+
   const [tweetDetails, setTweetDetails] = useState([]);
 
   //side bar toggler
   const [toggleSideBar, setToggleSideBar] = useState(false);
 
+  //navigate hook
+  const navigate = useNavigate();
   // function for posting a new tweet
   const getTweetDetails = async () => {
     try {
@@ -32,7 +45,7 @@ function TweetDetails() {
 
       const response = await axios.get(`/tweet/${id}`);
 
-      console.log(response);
+      console.log("is here ", response);
       //if tweet posting is successful
       if (response?.data?.success) {
         //update tweetDetails state variable for UI update
@@ -47,6 +60,11 @@ function TweetDetails() {
           error?.message ??
           "Something went wrong in tweet posting"
       );
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     }
   };
 
@@ -55,9 +73,56 @@ function TweetDetails() {
     setToggleSideBar(!toggleSideBar);
   };
 
-  const tweetOperation = () => {
+  const tweetOperation = (isReply = null, tweetId = null) => {
     //Get new tweets
-    getTweetDetails();
+    if (isReply === "reply") {
+      //set tweet id
+      setTweetId(tweetId);
+    } else {
+      //Get new tweets
+      getTweetDetails();
+    }
+  };
+
+  //function to upload image
+  const uploadImage = async (id) => {
+    try {
+      // Create a FormData object to handle file upload
+      const formData = new FormData();
+      formData.append("file", postImage.data);
+
+      //upload API call
+      const response = await axios.post(`/tweet/${id}/image`, formData);
+      if (response?.data?.success) {
+        return response.data.imagePath;
+      }
+    } catch (error) {
+      console.log("error in upload", error);
+      toast.error(
+        error?.response?.data?.message ??
+          error?.message ??
+          "Something went wrong in tweet's image posting"
+      );
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    }
+  };
+
+  // Function to handle file selection
+  const handleFileSelect = (event) => {
+    try {
+      const img = {
+        preview: URL.createObjectURL(event.target.files[0]),
+        data: event.target.files[0],
+      };
+      //set the value of state variable `image` with `img` from above object
+      setPostImage(img);
+    } catch (error) {
+      console.log("error: " + error);
+    }
   };
 
   useEffect(() => {
@@ -93,27 +158,27 @@ function TweetDetails() {
 
         {/* Tweet List */}
         <div className="col-md-8 border p-2">
-          <div className="border rounded">
-            <p>Main</p>
-            <div className="d-flex p-2 border-bottom">
+          <div className=" rounded">
+            <p className="fw-bold m-0 ">Tweet</p>
+            <div className="d-flex p-2 mb-4">
               <TweetCard
                 main="true"
-                tweet={tweetDetails}
+                details={tweetDetails}
                 tweetOperation={tweetOperation}
               />
             </div>
 
             <>
-              {tweetDetails?.reply?.length > 0 && <p>reply</p>}
+              {tweetDetails?.reply?.length > 0 && (
+                <p className="m-0 fw-bold">Replies</p>
+              )}
               {tweetDetails?.reply?.length > 0 &&
                 tweetDetails.reply.map((tweet, index) => (
-                  <div
-                    className={`d-flex p-2 ${
-                      index !== tweetDetails.length - 1 ? "border-bottom" : ""
-                    } `}
-                    key={tweet._id}
-                  >
-                    <TweetCard tweet={tweet} tweetOperation={tweetOperation} />
+                  <div className={`d-flex p-2 border`} key={tweet._id}>
+                    <TweetCard
+                      details={tweet}
+                      tweetOperation={tweetOperation}
+                    />
                   </div>
                 ))}
             </>

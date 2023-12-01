@@ -1,0 +1,31 @@
+.bottom-div {
+    background-color: #007bff; /* Primary background color */
+    height: 200px; /* Set your desired height */
+    position: relative;
+}
+
+.rounded-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    left: 5%;
+    transform: translateY(50%);
+    background: #f3f3f5;
+    padding: 5px;
+}
+
+.custom-button {
+    position: absolute;
+    bottom: 0;
+    right: 20px;
+    transform: translateY(40px);
+}
+
+/* responsive css */
+@media screen and (min-width: 1000px) {
+    .rounded-image {
+        left: 3%;
+    }
+}

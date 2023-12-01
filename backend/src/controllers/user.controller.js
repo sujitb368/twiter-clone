@@ -2,6 +2,7 @@
 
 import User from "../models/user.model.js";
 import { __dirname } from "../config.js";
+import Tweet from "../models/tweet.model.js";
 /**
  * Get a single user's details.
  * @param {Object} req - Express request object.
@@ -15,8 +16,8 @@ const getSingleUser = async (req, res) => {
     // Find the user by ID and select the fields to include/exclude
     const user = await User.findById(id)
       .select("-password") // Exclude password field
-      .populate("followers", "_id name") // Populate followers with selected fields
-      .populate("following", "_id name"); // Populate following with selected fields
+      .populate("followers", "_id name username") // Populate followers with selected fields
+      .populate("following", "_id name username"); // Populate following with selected fields
 
     if (!user) {
       // User not found
@@ -208,15 +209,19 @@ const editUserDetails = async (req, res) => {
     // Save the edited user in the DB
     await user.save();
 
-    return res
-      .status(200)
-      .send({ message: "User details updated successfully", success: true });
+    return res.status(200).send({
+      message: "User details updated successfully",
+      success: true,
+      user,
+    });
   } catch (error) {
     // Handle errors
     console.error(error.message); // Log the error for debugging
-    return res
-      .status(500)
-      .send({ message: "Internal Server Error", success: false, error });
+    return res.status(500).send({
+      message: error.message ?? "Internal Server Error",
+      success: false,
+      error,
+    });
   }
 };
 
@@ -227,7 +232,7 @@ const editUserDetails = async (req, res) => {
  */
 const getUserTweets = async (req, res) => {
   try {
-    const { _id: userId } = req.user;
+    const { id: userId } = req.params;
 
     if (!userId) {
       return res.status(400).send({
@@ -237,13 +242,12 @@ const getUserTweets = async (req, res) => {
     }
 
     // Find all tweets where the 'tweetedBy' field matches the user ID
-    const tweets = await Tweet.find({ tweetedBy: userId }).populate(
-      "tweetedBy",
-      "_id name"
-    ); // Populate 'tweetedBy' with selected fields
+    const tweets = await Tweet.find({ tweetedBy: userId })
+      .populate("tweetedBy", "_id name username profilePicture")
+      .populate("retweetedBy", "_id name username");
 
     return res.status(200).send({
-      message: "Successfully fetched tweets",
+      message: "Successfully fetched user's tweets",
       success: true,
       tweets,
     });

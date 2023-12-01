@@ -17,18 +17,18 @@ import authRoutes from "./routes/auth.route.js";
 // Import user routes module
 import userRoutes from "./routes/user.route.js";
 
-// Import user routes module
+// Import tweet routes module
 import tweetRoutes from "./routes/tweet.route.js";
 
 // Declare routes for the application under the "/api/v1/*" path
 
-//auth routes
+// Auth routes
 app.use("/api/v1/auth", authRoutes);
 
-//user routes
+// User routes
 app.use("/api/v1/user", userRoutes);
 
-//tweet routes
+// Tweet routes
 app.use("/api/v1/tweet", tweetRoutes);
 
 // Export the configured Express application

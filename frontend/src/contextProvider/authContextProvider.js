@@ -1,5 +1,4 @@
 // Import necessary dependencies and components
-
 import { useReducer } from "react";
 import { AuthContext, authReducer, initialState } from "../context/authContext";
 

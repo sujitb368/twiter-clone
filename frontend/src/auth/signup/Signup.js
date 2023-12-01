@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import "./Signup.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
+//import loader
+import Loader from "../../components/loader/Loader";
+
+import logo from "../../images/logo2.png";
+
 function Signup() {
   // State variables for user registration details
   const [name, setName] = useState("");
@@ -9,12 +15,10 @@ function Signup() {
   const [username, setUsername] = useState("");
   const [dob, setDob] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
 
-  //eslint-disable-next-line
-  const [loding, setLoding] = useState("");
+  //state variable to control loader
+  const [showLoader, setShowLoader] = useState(false);
 
   // Navigation hook
   const navigate = useNavigate();
@@ -26,6 +30,8 @@ function Signup() {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
+      //set loader state to true
+      setShowLoader(true);
       // API call to register user
       const response = await axios.post(
         `/auth/register`,
@@ -37,16 +43,23 @@ function Signup() {
         }
       );
 
+      //set loader state to false
+      setShowLoader(false);
+
       // Check if signup is successful and display appropriate message
       if (response?.data?.success) {
-        //   Message({ type: "success", message: response.data.message });
+        toast.success(response?.data?.message);
         navigate("/login");
-      } else {
-        //   Message({ type: "error", message: response?.data?.message });
       }
     } catch (error) {
       console.log("Error while signing up", error);
-      //   Message({ type: "success", message: error.response.data.message });
+      toast.error(
+        error?.response?.data?.message ??
+          error?.message ??
+          "Error while signing up"
+      );
+      //set loader state to true
+      setShowLoader(false);
     }
   };
 
@@ -58,8 +71,10 @@ function Signup() {
             window.innerWidth < 764 ? "rounded-top" : "rounded-start"
           }`}
         >
-          <h3>Welcome</h3>
-          <h5>icon</h5>
+          <h3 className="text-white">Welcome</h3>
+          <h4 className="col-8 text-center">
+            <img style={{ width: "50px" }} src={logo} alt="logo" />
+          </h4>{" "}
           {/* Add your icon here */}
         </div>
         <form className="col-12 col-md-8 p-2" onSubmit={handleSignup}>
@@ -136,9 +151,22 @@ function Signup() {
               />
             </div>
           </div>
-          <button type="submit" className="btn btn-primary mt-1">
-            Sign up
-          </button>
+          {/* Show loader component */}
+          {showLoader && <Loader />}
+
+          {/* hide login button while loading */}
+          {!showLoader && (
+            <button type="submit" className="btn btn-primary mt-1">
+              Sign up
+            </button>
+          )}
+
+          <p className="text-dark fw-small fs-7 m-0">
+            Have account ?{" "}
+            <Link className="p-1 rounded text-decoration-none" to="/login">
+              Login
+            </Link>
+          </p>
         </form>
       </div>
     </div>

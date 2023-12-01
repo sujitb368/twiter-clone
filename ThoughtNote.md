@@ -15,6 +15,14 @@ This project aims to create a backend application for twitter clone using the ME
         - authController.js
         - userController.js
         - tweetController.js
+      - db
+        - dbConfig.js
+      - helper
+        - authHelper.js
+      - images
+      - middlewares
+        - auth.middleware.js
+        - file.middleware.js
       - /models
         - User.js
         - Tweet.js
@@ -22,9 +30,13 @@ This project aims to create a backend application for twitter clone using the ME
         - authRoutes.js
         - userRoutes.js
         - tweetRoutes.js
+      - app.js
+      - config.js
       - server.js
 
 ## Code Explanation
+
+# \***\*\*\*\*\***\*\*\*\*\***\*\*\*\*\***backend\***\*\*\*\*\***\*\*\*\*\***\*\*\*\*\***
 
 ### 1. Setting Up the Project
 
@@ -45,12 +57,15 @@ This project aims to create a backend application for twitter clone using the ME
 # 2.2 app.js :
 
 - Express Application Setup:
-  The code initializes an Express application, a popular Node.js web application framework for building RESTful APIs and web services.
+  The code initializes an Express application, for building RESTful APIs and web services.
 - CORS Configuration:
   Cross-Origin Resource Sharing (CORS) is enabled using the cors middleware.
   It allows requests from a specified origin (process.env.CORS_ORIGIN)
+- express.json() middleware is used to parse incoming JSON requests with a specified limit of 16kb
 - Route Declaration:
-  The authentication routes are imported from the "auth.route.js" file and declared under the "/api/v1/user" path.
+  Routes for the application under the "/api/v1/\*" path.
+  Each type of route (auth, user, tweet) is associated with a specific sub-path
+  (/api/v1/auth, /api/v1/user, /api/v1/tweet).
 
 ### 4. Creating Models
 
@@ -61,7 +76,15 @@ This project aims to create a backend application for twitter clone using the ME
 
 ### 6. db/
 
-# 6.1 dbConfig.js:
+# 3 config.js :
+
+- URL and Path Modules:
+  The code imports functions from the url and path modules, which are built-in Node.js modules. These modules provide utilities for working with URLs and file paths, respectively.
+
+- Current Module's Directory:
+  Using fileURLToPath and dirname, the code obtains the current module's file path (**filename) and then derives the corresponding directory path (**dirname).
+
+# 4 dbConfig.js:
 
 - Mongoose Connection:
   The code uses the Mongoose library to connect to a MongoDB database specified by the URI provided in the process.env.MONGODB_URI environment variable.
@@ -72,7 +95,7 @@ This project aims to create a backend application for twitter clone using the ME
 
 ### 7. helper/
 
-# 7.1 authHelper.js :
+# 5 authHelper.js :
 
 - Password Hashing:
   hashPassword that utilizes the bcrypt library to hash a given password with salt round of 10.
@@ -82,3 +105,139 @@ This project aims to create a backend application for twitter clone using the ME
   comparePassword is implemented to compare a plain-text password with its hashed version.
 - Token generation:
   generateToken that uses the jwt library to generate a unique token based on the user's email and a secret key.
+
+# 6 images/
+
+- To store files
+
+# 7 auth.middleware.js :
+
+- Import Necessary Libraries and Modules:
+  Import jwt and the user.model.
+- isLogin Middleware:
+  Check if a user is logged in by verifying the authorization token, extracting user details, and adding them to the request object.
+
+# 8 file.middleware.js:
+
+- multer configuration
+- file download middleware
+
+# 9.1 tweet.model.js:
+
+- schema definition for tweet
+
+# 9.2 user.model.js:
+
+- schema definition for user
+
+# 10.1 auth.route.js:
+
+- routes for auth
+- `/register`
+- `/login`
+
+# 10.2 user.route.js:
+
+- routes for user operation
+- `/:id` get single user
+- `/:id/tweets` get user's tweets (`id = userId`)
+- `/follow/:userToFollowId` to follow a user
+- `/unfollow/:userToUnFollowId` to unfollow a user
+- `/edit` to edit user details
+- `/:_id/uploadProfilePic` to upload profile picture
+- `/get-file/:filename` to download file
+
+# 10.3 tweet.routes:
+
+- POST(`/`) create tweet
+- GET(`/`) get all tweet
+- GET(`/_id`) get single tweet
+- POST(`/:_id/like`) to like a tweet
+- POST(`/:_id/dislike`) to dislike a tweet
+- POST(`/:_id/reply`) to reply a tweet
+- POST(`/:_id/retweet`) to retweet a tweet
+- DELETE(`/:_id`) to delete a tweet
+- POST(`/:_id/image`) to upload image for tweet
+- GET(`/get-file/:filename`) to download file
+
+# 11.1 auth.controller.js:
+
+- Dependencies:
+  Importing necessary dependencies, including the User model and authentication helper functions.
+
+- Function:
+
+  - Register:
+    Handling user sign-up with data validation, checking for existing users, password hashing, saving to the database, and returning appropriate responses.
+
+  - Login:
+    Managing user login with email and password validation, checking for user existence, comparing passwords, generating tokens, and returning responses accordingly.
+
+- Error Handling:
+  Implementing try-catch blocks to handle potential errors and providing informative error responses.
+
+# 11.2 tweet.controller.js:
+
+- Model Import:
+  The code imports the `Tweet` model
+
+- Function:
+
+  - `createTweet` function handles the creation of a new tweet.
+  - `likeTweet` function allows a user to like a tweet. It checks if the user has already liked the tweet, adds the user's ID to the tweet's likes array, and saves the updated tweet.
+  - `dislikeTweet` function enables a user to dislike a previously liked tweet. It ensures the tweet exists, checks if the user has liked it, removes the user's ID from the likes array, and saves the updated tweet. -`replyToTweet` function handles the reply to a tweet. It checks for the existence of the parent tweet, creates a new tweet for the reply, saves it, and updates the parent tweet with the reply's ID.
+  - `getSingleTweet` function retrieves details for a single tweet by its ID, populating user and reply details. It returns a success response with the tweet details.
+  - `getAllTweet` function fetches all tweets, sorting them in descending order of creation and populating user and reply details. It returns a success response with an array of tweet details.
+  - `deleteTweet` function allows a user to delete their own tweet. It verifies ownership, deletes associated replies, and removes the tweet.
+  - `retweetTweet` function enables a user to retweet a tweet. It checks if the user has already retweeted the tweet, adds the user's ID to the retweets array, and saves the updated tweet.
+  - The `uploadTweetImage` function handles the upload of an image for a tweet. It checks for the presence of a file, updates the tweet's image field with the filename, and saves the tweet.
+
+# 11.3 auth.controller.js:
+
+Certainly! Here are 10 summary points for the provided code:
+
+- Model Import:
+  The code imports the `User` and `Tweet` models
+
+- Function:
+  - `getSingleUser`:
+    function retrieves details for a single user by their ID, excluding the password field and populating followers and following arrays with selected fields. It returns a success response with the user details.
+  - `followUser`:
+    function allows a user to follow another user. It checks for self-following, verifies user existence, and updates the following and followers arrays for both users.
+  - `unfollowUser`:
+    function enables a user to unfollow another user. It checks for self-unfollowing, verifies user existence, and updates the following and followers arrays accordingly.
+  - `editUserDetails`:
+    function allows a user to edit their name, date of birth, and location. It updates the user details and returns a success response with the edited user.
+  - `getUserTweets`:
+    function retrieves all tweets tweeted by a specific user, populating details for the tweet's author and re-tweeter. It returns a success response with an array of user tweets.
+  - `uploadProfilePicture`:
+    function handles the upload of a profile picture for a user. It checks for the presence of a file, updates the user's profile picture field, and returns a success response.
+  - `downloadFile`:
+    function facilitates the download of a file, specified by the filename parameter. It constructs the file path and triggers the file download, handling potential errors.
+
+# \***\*\*\*\*\*\*\***\*\*\***\*\*\*\*\*\*\*** frontend \***\*\*\*\*\*\*\***\*\*\***\*\*\*\*\*\*\***
+
+### 1. index.html:
+
+- only html page
+
+### 2. index.js:
+
+- get the reference of html page and dynamically insert the component
+
+### . app.js:
+
+- Component Overview Comment:
+  Provides an overview of the purpose and role of the main application component.
+
+Local Imports:
+Imports necessary dependencies and stylesheets for the application, including Bootstrap and Toastify.
+
+Axios Setup and User Authentication Check:
+In the useEffect hook, it checks for user and token in local storage and logs in the user if both exist. It also sets up Axios base URL and headers.
+
+ToastContainer for Notifications:
+Renders a ToastContainer from the react-toastify library to display notifications for user feedback.
+
+Conditional Routing Based on Authentication State:
+Uses the Routes component from React Router to define conditional routes. If the user is authenticated (authState.user.\_id exists), private routes are rendered; otherwise, public routes are rendered. This includes redirection to the login page for any unknown URLs when the user is not authenticated.

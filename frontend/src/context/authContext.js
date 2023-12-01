@@ -1,6 +1,6 @@
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 
-// Define initial state for the cart
+// Define initial state for the authState
 const initialState = {
   user: [],
   token: null,
@@ -29,7 +29,7 @@ const authReducer = (state, action) => {
   }
 };
 
-// Custom hook to access the cart context
+// Custom hook to access the auth context
 const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

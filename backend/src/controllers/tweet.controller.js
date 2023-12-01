@@ -401,10 +401,17 @@ const uploadTweetImage = async (req, res) => {
         .send({ message: "No file uploaded", success: false });
     }
 
+    // Check for id
+    if (!tweetId) {
+      return res
+        .status(404)
+        .send({ message: "Tweet not found", success: false });
+    }
+
     // Find the tweet by ID
     const tweet = await Tweet.findById(tweetId);
 
-    // Check if the user exists
+    // Check if the tweet is exists
     if (!tweet) {
       return res
         .status(404)

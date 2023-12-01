@@ -8,6 +8,8 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../../images/logo.png";
 import { API_BASE_URL } from "../../Constant";
 import { useAuth } from "../../context/authContext";
+
+import { nameFunction } from "../../util";
 function Sidebar() {
   // auth provider
   const { authState, authDispatch } = useAuth();
@@ -46,11 +48,16 @@ function Sidebar() {
               <FaHouse /> <span>Home</span>
             </p>
           </Link>
-          <Link className="text-decoration-none text-dark" to="/profile">
-            <p className="m-0 w-50 pointer p-1 mb-1 sidebar-link m-auto border rounded">
-              <FaPerson /> <span>Profile</span>
-            </p>
-          </Link>
+          {authState.token && (
+            <Link
+              className="text-decoration-none text-dark"
+              to={`/profile/${authState.user._id}`}
+            >
+              <p className="m-0 w-50 pointer p-1 mb-1 sidebar-link m-auto border rounded">
+                <FaPerson /> <span>Profile</span>
+              </p>
+            </Link>
+          )}
           {authState.token ? (
             <p
               className="m-0 w-50 pointer p-1 mb-1 sidebar-link m-auto border rounded"
@@ -85,7 +92,13 @@ function Sidebar() {
               alt="User"
             />
           </div>
-          <span className="ms-1">{authState.user.name}</span>
+          <span className="ms-1">
+            <p className="m-0 ms-1 fw-bold">
+              {" "}
+              {nameFunction(authState.user.name)}
+            </p>
+            <p className="m-0 ms-1">@{authState.user.username}</p>
+          </span>
         </div>
       </div>
     </div>

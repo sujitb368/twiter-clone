@@ -37,9 +37,9 @@ const register = async (req, res) => {
         success: false,
       });
     }
+    //hash password to store in db
     const hashedPassword = await hashPassword(password);
 
-    //
     //user details
     const user = new User({
       name,
@@ -100,6 +100,7 @@ const login = async (req, res) => {
       //user details object without password field
       const userDetails = await removePassword(user);
 
+      //generate token
       const token = await generateToken(user._id);
 
       return res.status(200).send({

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import { FaHeart, FaReply, FaRetweet, FaTrashCan } from "react-icons/fa6";
 import { useAuth } from "../../context/authContext";
@@ -9,27 +9,25 @@ import { Link, useNavigate } from "react-router-dom";
 
 import axios from "axios";
 import { toast } from "react-toastify";
+import moment from "moment";
 
-function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
+import Loader from "../../components/loader/Loader";
+
+function TweetCard({ main, details, tweetOperation, index }) {
   const { authState } = useAuth();
-  const [tweetType, setTweetType] = useState("tweet");
-  const [newTweetContent, setNewTweetContent] = useState("");
+
+  const [replyTweetContent, setReplyTweetContent] = useState("");
+
   const [postImage, setPostImage] = useState({
     preview: "",
     data: "",
   });
 
-  //tweet Id
-  const [tweetId, setTweetId] = useState("");
-  //tweet modal
-  const [showReplyTweetModal, setShowReplyTweetModal] = useState("");
-  const [showReplyTweetModalFor, setShowReplyTweetModalFor] = useState({
-    tweetId: "",
-    showModal: false,
-  });
+  //state variable to control loader
+  const [showLoader, setShowLoader] = useState(false);
 
-  //endpoint for reply
-  const [endPoint, setEndPoint] = useState("");
+  //tweet id from props
+  const tweetId = details._id;
 
   //navigate hooks
   const navigate = useNavigate();
@@ -40,6 +38,7 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
 
   const handleLike = async (tweetId) => {
     try {
+      setShowLoader(true);
       //API call to like the tweet
       const response = await axios.post(
         `/tweet/${tweetId}/like`,
@@ -50,6 +49,8 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
           },
         }
       );
+
+      setShowLoader(false);
 
       if (response?.data?.success) {
         // await getTweets();
@@ -63,19 +64,29 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
           "Something went wrong in like"
       );
       console.log(`Error while like tweet`, error);
+      setShowLoader(false);
+
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     }
   };
 
   // function to delete a tweet
   const handleDelete = async (tweetId) => {
     try {
+      setShowLoader(true);
       // Make API request to delete the tweet
       const response = await axios.delete(`/tweet/${tweetId}`);
 
+      setShowLoader(false);
       if (response?.data?.success) {
-        // await getTweets();
         toast.success(response?.data?.message);
         if (main === "true") navigate("/");
+        //reset th page content
+        handleTweetOperation();
       }
     } catch (error) {
       toast.error(
@@ -84,6 +95,51 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
           "Something went wrong in delete tweet"
       );
       console.log(`Error while deleting tweet`, error);
+      setShowLoader(false);
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    }
+  };
+
+  const handleReTweet = async () => {
+    try {
+      setShowLoader(true);
+      const response = await axios.post(`tweet/${tweetId}/retweet`);
+      setShowLoader(false);
+      if (response?.data?.success) {
+        toast.success(response.data.message);
+        tweetOperation();
+      }
+    } catch (error) {
+      console.log("error", error);
+      toast.error(
+        error?.response?.data?.message ??
+          error?.message ??
+          "Something went wrong in tweet posting"
+      );
+      setShowLoader(false);
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    }
+  };
+
+  // Function to handle file selection
+  const handleFileSelect = (event) => {
+    try {
+      const img = {
+        preview: URL.createObjectURL(event.target.files[0]),
+        data: event.target.files[0],
+      };
+      //set the value of state variable `image` with `img` from above object
+      setPostImage(img);
+    } catch (error) {
+      console.log("error: " + error);
     }
   };
 
@@ -106,20 +162,27 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
           error?.message ??
           "Something went wrong in tweet's image posting"
       );
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
     }
   };
 
   // function for posting a new tweet
   const handleReply = async () => {
     try {
-      console.log("tweetId ", details);
-      // return;
+      if (replyTweetContent?.trim().length < 1) {
+        toast.error("Tweet content is required");
+      }
+      setShowLoader(true);
       // Make API request to post the new tweet
 
       const response = await axios.post(
-        endPoint,
+        `/tweet/${tweetId}/reply`,
         {
-          content: newTweetContent,
+          content: replyTweetContent,
         },
         {
           headers: {
@@ -134,16 +197,19 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
 
         if (postImage.preview.length) {
           //pass the tweet id to upload image
-          await uploadImage(response?.data?.details._id);
+          await uploadImage(response?.data?.tweet._id);
         }
+        setShowLoader(false);
+
         //show success toast
         toast.success(response.data.message);
 
-        //reset image preview
+        //reset necessary variables
+        //reset image upload
         setPostImage({ preview: "", data: "" });
-
         //reset reply modal
-        setNewTweetContent("");
+        setReplyTweetContent("");
+
         // Refresh the tweet list
         tweetOperation();
       }
@@ -154,55 +220,14 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
           error?.message ??
           "Something went wrong in tweet posting"
       );
-      setShowReplyTweetModal(!showReplyTweetModal);
-    }
-  };
-
-  const handleReTweet = async () => {
-    try {
-      const response = await axios.post(`tweet/${tweetId}/retweet`);
-
-      if (response?.data?.success) {
-        toast.success(response.data.message);
-        tweetOperation();
+      setShowLoader(false);
+      if (error?.response?.data?.message.toLowerCase() === "token expired") {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate("/login");
       }
-    } catch (error) {
-      console.log("error", error);
-      toast.error(
-        error?.response?.data?.message ??
-          error?.message ??
-          "Something went wrong in tweet posting"
-      );
     }
   };
-  const close = (setState) => {
-    // Implement logic to handle retweeting
-    setState(false);
-  };
-
-  // Function to handle file selection
-  const handleFileSelect = (event) => {
-    try {
-      const img = {
-        preview: URL.createObjectURL(event.target.files[0]),
-        data: event.target.files[0],
-      };
-      //set the value of state variable `image` with `img` from above object
-      setPostImage(img);
-    } catch (error) {
-      console.log("error: " + error);
-    }
-  };
-
-  // useEffect(() => {
-  //   // This code will be executed whenever tweetId changes
-  //   setEndPoint((endPoint) => {
-  //     endPoint = `/tweet/${tweetId}/reply`;
-  //     console.log("local end point", endPoint);
-  //     return endPoint;
-  //   });
-
-  // }, [tweetId, endPoint, tweetType]);
 
   return (
     <>
@@ -213,11 +238,12 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
       >
         <div
           style={{ width: "50px", height: "50px" }}
-          className="border rounded-circle ms-auto"
+          className="border rounded-circle ms-auto d-flex"
         >
           <img
+            style={{ objectFit: "cover" }}
             className="img-fluid p-2"
-            src={`${API_BASE_URL}/user/get-file/${details?.tweetedBy?.profilePicture}?jwtToken=${authState.token}`}
+            src={`${API_BASE_URL}/user/get-file/${details?.tweetedBy?.profilePicture}`}
             alt="User"
           />
         </div>
@@ -236,13 +262,16 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
         )}
         <p className="m-0 p-1">
           <Link
-            className="text-decoration-none text-dark"
-            to={`/tweetDetails/${details._id}`}
+            className="text-decoration-none text-dark me-1"
+            to={`/profile/${details.tweetedBy?._id}`}
           >
             {" "}
             <span className="fw-bold">@{details.tweetedBy?.username}</span>
           </Link>
-          - <span>{details.createdAt}</span>
+          -{" "}
+          <span className="fs-7 fw-bold">
+            {moment(details.createdAt).format("MMM Do YY")}
+          </span>
         </p>
         <Link
           className="text-decoration-none text-dark"
@@ -264,6 +293,7 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
             />
           )}
         </Link>
+        {showLoader && <Loader />}
         {/* Like, Reply, Retweet buttons */}
         <div className="d-flex">
           <span className="me-1">
@@ -278,32 +308,13 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
             />
             <span className="mx-1">{details.likes?.length}</span>
           </span>
+
           <span className="me-1">
             <FaReply
               key={details._id + "reply"}
-              onClick={async () => {
-                // setTweetType(details._id + "reply");
-                setTweetId((pre) => details._id);
-                // test(details._id);
-                setShowReplyTweetModal(!showReplyTweetModal);
-                setShowReplyTweetModalFor((prev) => {
-                  console.log(
-                    "showReplyTweetModalFor 1",
-                    showReplyTweetModalFor
-                  );
-                  return [
-                    {
-                      ...prev,
-                      tweetId: details._id,
-                      showModal: true,
-                    },
-                  ];
-                });
-                console.log("showReplyTweetModalFor 2", showReplyTweetModalFor);
-              }}
               className="text-primary pointer"
               data-bs-toggle="modal"
-              data-bs-target="#replyRetweetModal"
+              data-bs-target={`#replyRetweetModal${index}`}
             />
             <span className="mx-1">{details.reply?.length}</span>
           </span>
@@ -329,44 +340,26 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
             </span>
           )}
         </div>
-      </div>
-      <div
-        className={`modal ${
-          showReplyTweetModalFor.showModal === true &&
-          showReplyTweetModalFor.tweetId === tweetIdProps
-            ? "show"
-            : ""
-        }`}
-        tabIndex="-1"
-        role="dialog"
-        id="replyRetweetModal"
-        key={tweetIdProps}
-        title={details._id}
-      >
-        <div className="modal-dialog" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">
-                {tweetType === "retweet" ? "Re Tweet" : "Reply"}
-                {/* id = {JSON.stringify(showReplyTweetModalFor)} */}
-              </h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-                onClick={(e) => close(setShowReplyTweetModal)}
-              ></button>
-            </div>
-            <div className="modal-body">
-              Content : {details.content}
-              <textarea
-                className="form-control mb-1"
-                placeholder="Add your comment"
-                value={newTweetContent}
-                onChange={(e) => setNewTweetContent(e.target.value)}
-              ></textarea>
-              <div className="mb-3">
+
+        {/* reply modal */}
+        <div
+          className={`modal`}
+          tabIndex="-1"
+          role="dialog"
+          id={`replyRetweetModal${index}`}
+        >
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Reply</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body">
                 {postImage.preview.length > 0 && (
                   <div className="col-10 m-auto">
                     {" "}
@@ -377,31 +370,39 @@ function TweetCard({ main, details, tweetOperation, tweetIdProps }) {
                     />{" "}
                   </div>
                 )}
-                <input
-                  className="form-control form-control-sm"
-                  id="formFileSm"
-                  type="file"
-                  onChange={(e) => handleFileSelect(e)}
-                />
+
+                <textarea
+                  className="form-control mb-1"
+                  placeholder="Add your comment"
+                  value={replyTweetContent}
+                  onChange={(e) => setReplyTweetContent(e.target.value)}
+                ></textarea>
+                <div className="mb-3">
+                  <input
+                    className="form-control form-control-sm"
+                    id="formFileSm"
+                    type="file"
+                    onChange={(e) => handleFileSelect(e)}
+                  />
+                </div>
               </div>
-            </div>
-            <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-bs-dismiss="modal"
-                onClick={(e) => close(setShowReplyTweetModal)}
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                data-bs-dismiss="modal"
-                onClick={() => handleReply()}
-              >
-                Submit
-              </button>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  data-bs-dismiss="modal"
+                  onClick={() => handleReply()}
+                >
+                  Submit
+                </button>
+              </div>
             </div>
           </div>
         </div>
