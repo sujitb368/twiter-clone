@@ -24,6 +24,10 @@ import { ToastContainer } from "react-toastify";
 function App() {
   const { authState, authDispatch } = useAuth();
 
+  //axios default backend url and token
+  axios.defaults.baseURL = "http://localhost:8000/api/v1";
+  axios.defaults.headers.common["Authorization"] = authState.token;
+
   useEffect(() => {
     //get user cart from local storage
     const user = JSON.parse(localStorage.getItem("user"));
@@ -34,13 +38,11 @@ function App() {
       authDispatch({ type: "AUTH_SUCCESS", payload: { token, user } });
     }
 
-    axios.defaults.baseURL = "http://localhost:8000/api/v1";
-    axios.defaults.headers.common["Authorization"] = token;
-
     // eslint-disable-next-line
-  }, []);
+  }, [authState.token]);
   return (
     <>
+      {/* container for toast */}
       <ToastContainer
         position="top-right"
         autoClose={2000}
