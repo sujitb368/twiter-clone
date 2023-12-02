@@ -82,6 +82,16 @@ function Profile() {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -109,6 +119,16 @@ function Profile() {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -162,6 +182,16 @@ function Profile() {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -217,6 +247,16 @@ function Profile() {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -253,6 +293,16 @@ function Profile() {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -287,6 +337,16 @@ function Profile() {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -365,7 +425,9 @@ function Profile() {
                   Edit
                 </button>
               </>
-            ) : user?.followers?.includes(authState.user._id) ? (
+            ) : user?.followers?.some(
+                (item) => item._id === authState.user._id
+              ) ? (
               <button onClick={unFollow} className="btn btn-dark btn-sm me-1">
                 Unfollow
               </button>

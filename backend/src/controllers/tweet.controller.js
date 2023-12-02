@@ -65,13 +65,15 @@ const likeTweet = async (req, res) => {
 
     // Check if the tweet exists
     if (!tweet) {
-      return res.status(404).send({ message: "Tweet not found" });
+      return res
+        .status(404)
+        .send({ message: "Tweet not found", success: false });
     }
 
     if (tweet.likes.includes(loggedInUserId)) {
       return res
         .status(400)
-        .send({ message: "You have already liked this tweet" });
+        .send({ message: "You have already liked this tweet", success: false });
     }
 
     // Add the user's ID to the likes array in the tweet document
@@ -137,7 +139,9 @@ const dislikeTweet = async (req, res) => {
   } catch (error) {
     // Handle errors
     console.error(error.message); // Log the error for debugging
-    return res.status(500).send({ message: "Internal Server Error" });
+    return res
+      .status(500)
+      .send({ message: "Internal Server Error", success: false });
   }
 };
 
@@ -316,7 +320,10 @@ const deleteTweet = async (req, res) => {
     if (loggedInUserId.toString() !== tweet.tweetedBy.toString()) {
       return res
         .status(403)
-        .send({ message: "You do not have permission to delete this tweet" });
+        .send({
+          message: "You do not have permission to delete this tweet",
+          success: false,
+        });
     }
 
     // Delete the replies associated with the tweet
@@ -424,7 +431,7 @@ const uploadTweetImage = async (req, res) => {
     // Save the updated user in the DB
     await tweet.save();
 
-    return res.status(200).json({
+    return res.status(200).send({
       message: "Tweet image uploaded successfully",
       success: true,
       imagePath: req.file.filename,

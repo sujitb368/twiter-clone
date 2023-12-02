@@ -14,7 +14,7 @@ import moment from "moment";
 import Loader from "../../components/loader/Loader";
 
 function TweetCard({ main, details, tweetOperation, index }) {
-  const { authState } = useAuth();
+  const { authState, authDispatch } = useAuth();
 
   const [replyTweetContent, setReplyTweetContent] = useState("");
 
@@ -69,6 +69,15 @@ function TweetCard({ main, details, tweetOperation, index }) {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
         navigate("/login");
       }
     }
@@ -99,6 +108,16 @@ function TweetCard({ main, details, tweetOperation, index }) {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -124,6 +143,16 @@ function TweetCard({ main, details, tweetOperation, index }) {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -165,6 +194,16 @@ function TweetCard({ main, details, tweetOperation, index }) {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -224,6 +263,16 @@ function TweetCard({ main, details, tweetOperation, index }) {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }

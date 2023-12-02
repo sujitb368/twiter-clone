@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   //auth provider
-  const { authState } = useAuth();
+  const { authState, authDispatch } = useAuth();
 
   //state variables for tweet
   const [tweets, setTweets] = useState([]);
@@ -57,6 +57,15 @@ const Home = () => {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
         navigate("/login");
       }
     }

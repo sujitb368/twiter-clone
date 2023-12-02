@@ -7,8 +7,7 @@ This project aims to create a backend application for twitter clone using the ME
 ## Project Structure:
 
 - /project
-  - /frontend
-    - 123
+  - ## /frontend
   - /backend
     - /src
       - /controllers

@@ -4,6 +4,7 @@
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { JWT_SECRET, JWT_EXPIRY } from "../constant.js";
 
 // Function to Hash Password
 // asynchronous function named hashPassword to hash the given password with a salt round of 10.
@@ -53,8 +54,11 @@ const comparePassword = async (password, hashedPassword) => {
 const generateToken = async (_id) => {
   try {
     // Generate a unique token using the user's email and the reset password secret key
-    const token = jwt.sign({ _id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRY,
+    // const token = jwt.sign({ _id }, process.env.JWT_SECRET, {
+    //   expiresIn: process.env.JWT_EXPIRY,
+    // });
+    const token = jwt.sign({ _id }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRY,
     });
     return token;
   } catch (error) {

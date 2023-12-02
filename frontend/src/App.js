@@ -25,7 +25,8 @@ function App() {
   const { authState, authDispatch } = useAuth();
 
   //axios default backend url and token
-  axios.defaults.baseURL = "http://localhost:8000/api/v1";
+  // axios.defaults.baseURL = "http://localhost:8000/api/v1";
+  axios.defaults.baseURL = "https://twiter-clone-9uz4.onrender.com/api/v1";
   axios.defaults.headers.common["Authorization"] = authState.token;
 
   useEffect(() => {

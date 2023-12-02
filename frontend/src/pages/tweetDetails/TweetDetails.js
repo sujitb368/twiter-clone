@@ -15,21 +15,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Sidebar from "../../components/sidebar/Sidebar";
 import TweetCard from "../../components/tweetCard/TweetCard";
+import { useAuth } from "../../context/authContext";
 
 function TweetDetails() {
   //get tweet id from url params
   const { id } = useParams();
 
-  const [replyTweetContent, setReplyTweetContent] = useState("");
-  const [postImage, setPostImage] = useState({
-    preview: "",
-    data: "",
-  });
-
-  //tweet modal
-  const [showReplyModal, setShowReplyModal] = useState(false);
-
-  const [tweetId, setTweetId] = useState();
+  const { authDispatch } = useAuth();
 
   const [tweetDetails, setTweetDetails] = useState([]);
 
@@ -44,8 +36,6 @@ function TweetDetails() {
       // Make API request to get single tweet with its details
 
       const response = await axios.get(`/tweet/${id}`);
-
-      console.log("is here ", response);
       //if tweet posting is successful
       if (response?.data?.success) {
         //update tweetDetails state variable for UI update
@@ -63,6 +53,16 @@ function TweetDetails() {
       if (error?.response?.data?.message.toLowerCase() === "token expired") {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
+
+        // Perform login logic, and if un-successful, dispatch the user data
+        authDispatch({
+          type: "AUTH_FAILED",
+          payload: {
+            user: "",
+            token: "",
+          },
+        });
+
         navigate("/login");
       }
     }
@@ -73,56 +73,9 @@ function TweetDetails() {
     setToggleSideBar(!toggleSideBar);
   };
 
-  const tweetOperation = (isReply = null, tweetId = null) => {
+  const tweetOperation = () => {
     //Get new tweets
-    if (isReply === "reply") {
-      //set tweet id
-      setTweetId(tweetId);
-    } else {
-      //Get new tweets
-      getTweetDetails();
-    }
-  };
-
-  //function to upload image
-  const uploadImage = async (id) => {
-    try {
-      // Create a FormData object to handle file upload
-      const formData = new FormData();
-      formData.append("file", postImage.data);
-
-      //upload API call
-      const response = await axios.post(`/tweet/${id}/image`, formData);
-      if (response?.data?.success) {
-        return response.data.imagePath;
-      }
-    } catch (error) {
-      console.log("error in upload", error);
-      toast.error(
-        error?.response?.data?.message ??
-          error?.message ??
-          "Something went wrong in tweet's image posting"
-      );
-      if (error?.response?.data?.message.toLowerCase() === "token expired") {
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-        navigate("/login");
-      }
-    }
-  };
-
-  // Function to handle file selection
-  const handleFileSelect = (event) => {
-    try {
-      const img = {
-        preview: URL.createObjectURL(event.target.files[0]),
-        data: event.target.files[0],
-      };
-      //set the value of state variable `image` with `img` from above object
-      setPostImage(img);
-    } catch (error) {
-      console.log("error: " + error);
-    }
+    getTweetDetails();
   };
 
   useEffect(() => {

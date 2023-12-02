@@ -1,6 +1,7 @@
 // Import necessary libraries and modules
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import { JWT_SECRET, JWT_EXPIRY } from "../constant.js";
 
 // Middleware for Checking User Login
 const isLogin = (req, res, next) => {
@@ -18,7 +19,14 @@ const isLogin = (req, res, next) => {
       : authorization;
 
     // verify authorization token
-    jwt.verify(token, process.env.JWT_SECRET, async (err, payload) => {
+    // jwt.verify(token, process.env.JWT_SECRET, async (err, payload) => {
+    //   if (err) {
+    //     return res.status(401).send({
+    //       message: "token expired",
+    //       success: false,
+    //     });
+    //   }
+    jwt.verify(token, JWT_SECRET, async (err, payload) => {
       if (err) {
         return res.status(401).send({
           message: "token expired",

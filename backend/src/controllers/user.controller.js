@@ -27,7 +27,7 @@ const getSingleUser = async (req, res) => {
     }
 
     // Respond with complete user data
-    return res.status(200).json({
+    return res.status(200).send({
       message: "User data",
       success: true,
       user,
@@ -91,11 +91,15 @@ const followUser = async (req, res) => {
     // Save both users
     await Promise.all([loggedInUser.save(), userToFollow.save()]);
 
-    return res.status(200).json({ message: "User followed successfully" });
+    return res
+      .status(200)
+      .send({ message: "User followed successfully", success: true });
   } catch (error) {
     // Handle errors
     console.error(error.message); // Log the error for debugging
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res
+      .status(500)
+      .send({ message: "Internal Server Error", success: false, error });
   }
 };
 
@@ -292,7 +296,7 @@ const uploadProfilePicture = async (req, res) => {
     // Save the updated user in the DB
     await user.save();
 
-    return res.status(200).json({
+    return res.status(200).send({
       message: "Profile picture uploaded successfully",
       success: true,
       imagePath: req.file.filename,
@@ -302,7 +306,7 @@ const uploadProfilePicture = async (req, res) => {
     console.error(error.message); // Log the error for debugging
     return res
       .status(500)
-      .json({ message: "Internal Server Error", success: false, error });
+      .send({ message: "Internal Server Error", success: false, error });
   }
 };
 
